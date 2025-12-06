@@ -19,9 +19,11 @@ console.log('Environment variables:', {
   PORT: process.env.PORT || 'Using default port'
 });
 
-app.use('/*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/build', 'index.html'));
-});
+//routes - must be defined BEFORE the catch-all route
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/categories', require('./routes/categories'));
+app.use('/api/questions', require('./routes/questions'));
+app.use('/api/answers', require('./routes/answers'));
 
 app.use((err, req, res, next) => {
   console.log(err)
@@ -32,12 +34,13 @@ app.use((err, req, res, next) => {
     })
   }
   console.log('my errr', err)
+  next(err)
 })
-//routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/categories', require('./routes/categories'));
-app.use('/api/questions', require('./routes/questions'));
-app.use('/api/answers', require('./routes/answers'))
+
+// Catch-all route for serving React app - must be LAST
+app.use('/*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/build', 'index.html'));
+})
 
 //connection to the database
 connection();

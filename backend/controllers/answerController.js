@@ -84,7 +84,7 @@ const deleteAnswer = async (req, res) => {
             { $pull: { answers: answer._id } }
         );
 
-        await answer.remove();
+        await answer.deleteOne();
         res.json({ message: 'Answer removed' });
     } catch (error) {
         console.error(error);

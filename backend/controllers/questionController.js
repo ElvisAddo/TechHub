@@ -1,5 +1,6 @@
 const Question = require('../models/Question');
 const Category = require('../models/Category');
+const Answer = require('../models/Answer');
 
 // @desc    Get questions by category
 // @route   GET /api/questions/category/:categoryId
@@ -57,16 +58,16 @@ const createQuestion = async (req, res) => {
 
 const updateQuestion = async (req, res) => {
   try {
-      const {title , content , category} = req.body; 
+      const {title , content , category} = req.body;
 
       // verify if the question category exist
-      const categoryExists = Category.findById(category);
+      const categoryExists = await Category.findById(category);
 
       if (!categoryExists) {
           return res.status(400).json({ message : "The question category does not exist"})
       }
-    
-    const question = Question.findById(req.params.id)
+
+    const question = await Question.findById(req.params.id)
 
      if (!question){
         return res.status(404).json ({ message : 'The question does not exist'})
@@ -75,16 +76,16 @@ const updateQuestion = async (req, res) => {
     if(question.user.toString() !== req.user._id.toString()){
         return res.status(403).json ({ message : 'Sorry you dont have permission to edit this question'})
     }
-     
+
     question.title = title || question.title;
     question.content = content || question.content;
     question.category = category || question.category;
 
-    const updateQuestion = await question.save();
+    const updatedQuestion = await question.save();
 
-    await updateQuestion.populate('user','username');
-    await updateQuestion.populate('category','name');
-   res.json(updateQuestion)
+    await updatedQuestion.populate('user','username');
+    await updatedQuestion.populate('category','name');
+   res.json(updatedQuestion)
 
   }
   catch(error){
@@ -116,7 +117,7 @@ const deleteQuestion = async (req, res) => {
         // Delete all answers associated with this question
         await Answer.deleteMany({ question: question._id });
 
-        await question.remove();
+        await question.deleteOne();
         res.json({ message: 'Question removed' });
     } catch (error) {
         console.error(error);
