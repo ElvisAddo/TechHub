@@ -1,14 +1,8 @@
-const supabase = require('../config/supabase');
+const Category = require('../models/Category');
 
 const getCategories = async (req, res) => {
     try {
-        const { data: categories, error } = await supabase
-            .from('categories')
-            .select('*')
-            .order('name', { ascending: true });
-
-        if (error) throw error;
-
+        const categories = await Category.find().sort({ name: 1 });
         res.json(categories);
     } catch (error) {
         console.error(error);
@@ -20,19 +14,14 @@ const createCategory = async (req, res) => {
     try {
         const { name, description } = req.body;
 
-        const { data: category, error } = await supabase
-            .from('categories')
-            .insert([{
-                name,
-                description,
-                created_by: req.user.id
-            }])
-            .select()
-            .single();
+        const category = new Category({
+            name,
+            description,
+            createdBy: req.user._id
+        });
 
-        if (error) throw error;
-
-        res.status(201).json(category);
+        const createdCategory = await category.save();
+        res.status(201).json(createdCategory);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });

@@ -1,35 +1,29 @@
-const supabase = require('../config/supabase');
+const Answer = require('../models/Answer');
+const Question = require('../models/Question');
 
 const addAnswer = async (req, res) => {
     try {
         const { content } = req.body;
+        const question = await Question.findById(req.params.questionId);
 
-        const { data: question, error: questionError } = await supabase
-            .from('questions')
-            .select('id')
-            .eq('id', req.params.questionId)
-            .maybeSingle();
-
-        if (questionError || !question) {
+        if (!question) {
             return res.status(404).json({ message: 'Question not found' });
         }
 
-        const { data: answer, error } = await supabase
-            .from('answers')
-            .insert([{
-                content,
-                user_id: req.user.id,
-                question_id: question.id
-            }])
-            .select(`
-                *,
-                user:users(username)
-            `)
-            .single();
+        const answer = new Answer({
+            content,
+            user: req.user._id,
+            question: question._id
+        });
 
-        if (error) throw error;
+        const createdAnswer = await answer.save();
 
-        res.status(201).json(answer);
+        question.answers.push(createdAnswer._id);
+        await question.save();
+
+        await createdAnswer.populate('user', 'username');
+
+        res.status(201).json(createdAnswer);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });
@@ -39,32 +33,18 @@ const addAnswer = async (req, res) => {
 const updateAnswer = async (req, res) => {
     try {
         const { content } = req.body;
+        const answer = await Answer.findById(req.params.id);
 
-        const { data: answer, error: answerError } = await supabase
-            .from('answers')
-            .select('*')
-            .eq('id', req.params.id)
-            .maybeSingle();
-
-        if (answerError || !answer) {
+        if (!answer) {
             return res.status(404).json({ message: 'Answer not found' });
         }
 
-        if (answer.user_id !== req.user.id) {
+        if (answer.user.toString() !== req.user._id.toString()) {
             return res.status(401).json({ message: 'Not authorised to answer this question' });
         }
 
-        const { data: updatedAnswer, error: updateError } = await supabase
-            .from('answers')
-            .update({
-                content: content || answer.content,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', req.params.id)
-            .select()
-            .single();
-
-        if (updateError) throw updateError;
+        answer.content = content || answer.content;
+        const updatedAnswer = await answer.save();
 
         res.json(updatedAnswer);
     } catch (error) {
@@ -75,27 +55,22 @@ const updateAnswer = async (req, res) => {
 
 const deleteAnswer = async (req, res) => {
     try {
-        const { data: answer, error: answerError } = await supabase
-            .from('answers')
-            .select('*')
-            .eq('id', req.params.id)
-            .maybeSingle();
+        const answer = await Answer.findById(req.params.id);
 
-        if (answerError || !answer) {
+        if (!answer) {
             return res.status(404).json({ message: 'Answer not found' });
         }
 
-        if (answer.user_id !== req.user.id && !req.user.is_admin) {
+        if (answer.user.toString() !== req.user._id.toString() && !req.user.isAdmin) {
             return res.status(401).json({ message: 'User not authorized' });
         }
 
-        const { error: deleteError } = await supabase
-            .from('answers')
-            .delete()
-            .eq('id', req.params.id);
+        await Question.updateOne(
+            { _id: answer.question },
+            { $pull: { answers: answer._id } }
+        );
 
-        if (deleteError) throw deleteError;
-
+        await answer.deleteOne();
         res.json({ message: 'Answer removed' });
     } catch (error) {
         console.error(error);
