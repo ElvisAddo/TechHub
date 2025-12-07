@@ -4,7 +4,7 @@ const path = require('path');
 const cors = require('cors');
 require('dotenv').config();
 const app = express();
-
+const frontendBuildPath = path.join(__dirname, '..', 'frontend', 'build');
 const connection = require('./config/Database');
 
 app.use(cors());
@@ -17,9 +17,11 @@ console.log('Environment variables:', {
   PORT: process.env.PORT || 'Using default port'
 });
 
+console.log('Current directory:', __dirname);
+console.log('Frontend build path:', frontendBuildPath);
 
 // Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../frontend/build')));
+app.use(express.static(frontendBuildPath));
 
 
 //routes - must be defined BEFORE the catch-all route
@@ -43,7 +45,7 @@ app.use((err, req, res, next) => {
 
 // Catch-all route for serving React app - must be LAST
 app.use('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+  res.sendFile(path.join(frontendBuildPath, 'index.html'));
 })
 
 //start the database server
