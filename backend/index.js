@@ -41,16 +41,18 @@ app.use('/*', (req, res) => {
 })
 
 
-const startServer = async () => {
- try {
-    await connection();    
-  app.listen(PORT, () => {
+ app.listen(PORT, () => {
     console.log(`Server is now running here on ${PORT}`);
   });
- }
-  catch (error){
-     console.log('An error occured in starting server')
-  }
-}
 
-await startServer()
+// const startServer = async () => {
+//  try {
+//     await connection();    
+ 
+//  }
+//   catch (error){
+//      console.log('An error occured in starting server')
+//   }
+// }
+
+// await startServer()
