@@ -43,12 +43,20 @@ const Header: React.FC = () => {
               Home
             </Link>
             {user && (
-              <Link
-                to="/questions/new"
-                className="text-slate-700 hover:text-blue-600 font-medium transition"
-              >
-                Ask Question
-              </Link>
+              <>
+                <Link
+                  to="/questions"
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Questions
+                </Link>
+                <Link
+                  to="/categories"
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Categories
+                </Link>
+              </>
             )}
           </nav>
 
@@ -91,7 +99,7 @@ const Header: React.FC = () => {
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 z-20">
                       <div className="px-4 py-2 border-b border-slate-200">
                         <p className="text-sm font-medium text-slate-900">{user.username}</p>
-                        <p className="text-xs text-slate-500">{user.email}</p>
+                      
                       </div>
                       <button
                         onClick={handleLogout}

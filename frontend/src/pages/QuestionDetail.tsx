@@ -124,8 +124,6 @@ const QuestionDetail: React.FC = () => {
             </div>
             <span>•</span>
             <span>{formatDate(question.createdAt)}</span>
-            <span>•</span>
-            <span>{question.views} views</span>
           </div>
           <div className="prose max-w-none">
             <p className="text-slate-700 whitespace-pre-wrap">{question.content}</p>

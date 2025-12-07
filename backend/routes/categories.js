@@ -5,6 +5,6 @@ const { auth , admin } = require ("../middleware/auth")
 
 router.route('/')
     .get(getCategories)
-    .post(auth, admin, createCategory);
+    .post(auth, createCategory);
 
 module.exports = router;

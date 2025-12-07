@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import QuestionsList from './pages/QuestionsList';
 import QuestionDetail from './pages/QuestionDetail';
 import NewQuestion from './pages/NewQuestion';
+import Categories from './pages/Categories';
 
 function App() {
   return (
@@ -25,8 +26,9 @@ function App() {
                   <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/category/:categoryId" element={<QuestionsList />} />
-                    <Route path="/questions/:id" element={<QuestionDetail />} />
                     <Route path="/questions/new" element={<NewQuestion />} />
+                    <Route path="/questions/:id" element={<QuestionDetail />} />
+                    <Route path="/categories" element={<Categories />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </>

@@ -39,6 +39,12 @@ const NewQuestion: React.FC = () => {
     setLoading(true);
     setError('');
 
+    if (!title.trim() || !categoryId) {
+      setError('Please fill in all required fields');
+      setLoading(false);
+      return;
+    }
+
     try {
       const question = await questionService.create(title, content, categoryId);
       navigate(`/questions/${question._id}`);
@@ -134,7 +140,7 @@ const NewQuestion: React.FC = () => {
                 id="content"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                required
+              
                 rows={10}
                 className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
                 placeholder="Provide all the details someone would need to answer your question..."
