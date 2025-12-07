@@ -27,6 +27,11 @@ export interface Question {
 }
 
 export const questionService = {
+  getAll: async (): Promise<Question[]> => {
+    const response = await api.get<Question[]>('/questions');
+    return response.data;
+  },
+
   getByCategory: async (categoryId: string): Promise<Question[]> => {
     const response = await api.get<Question[]>(`/questions/category/${categoryId}`);
     return response.data;

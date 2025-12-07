@@ -2,6 +2,20 @@ const Question = require('../models/Question');
 const Category = require('../models/Category');
 const Answer = require('../models/Answer');
 
+const getAllQuestions = async (req, res) => {
+    try {
+        const questions = await Question.find()
+            .populate('user', 'username')
+            .populate('category', 'name')
+            .sort({ createdAt: -1 });
+
+        res.json(questions);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 const getQuestionsByCategory = async (req, res) => {
     try {
         const { categoryId } = req.params;
@@ -132,6 +146,7 @@ const getQuestionById = async (req, res) => {
 };
 
 module.exports = {
+    getAllQuestions,
     getQuestionsByCategory,
     createQuestion,
     getQuestionById,
