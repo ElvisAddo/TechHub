@@ -7,7 +7,10 @@ const app = express();
 const frontendBuildPath = path.join(__dirname, '..', 'frontend', 'build');
 const connection = require('./config/Database');
 
-app.use(cors());
+app.use(cors({
+origin: ['http://localhost:3000', 'http://localhost:3001'],
+  credentials : true
+}));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname + '/public/build')));
 app.use((express.json()));

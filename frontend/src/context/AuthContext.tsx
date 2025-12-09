@@ -17,15 +17,43 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Helper function to clear auth data
+  const clearAuthData = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    setUser(null);
+    setToken(null);
+  };
+
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
 
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+    try {
+      // Check if storedUser exists and is not "undefined" string
+      if (storedToken && storedUser && storedUser !== 'undefined') {
+        const parsedUser = JSON.parse(storedUser);
+        // Additional validation
+        if (parsedUser && typeof parsedUser === 'object' && 'id' in parsedUser) {
+          setToken(storedToken);
+          setUser(parsedUser);
+        } else {
+          console.warn('Invalid user data in localStorage');
+          clearAuthData();
+        }
+      } else {
+        // Clear data if token exists but user data is invalid
+        if (storedToken && (!storedUser || storedUser === 'undefined')) {
+          console.warn('Token exists but user data is invalid');
+          clearAuthData();
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      clearAuthData();
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {

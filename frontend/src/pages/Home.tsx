@@ -11,8 +11,15 @@ const Home: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [filteredQuestions, setFilteredQuestions] = useState<Question[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState({
+    categories: true,
+    questions: true
+  });
+  const [error, setError] = useState<{
+    categories?: string;
+    questions?: string;
+    general?: string;
+  }>({});
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
   const [answerContents, setAnswerContents] = useState<{ [key: string]: string }>({});
   const [submittingAnswer, setSubmittingAnswer] = useState<string | null>(null);
@@ -23,17 +30,34 @@ const Home: React.FC = () => {
 
   const loadData = async () => {
     try {
+      setIsLoading(prev => ({ ...prev, categories: true, questions: true }));
+      setError({});
+
       const [categoriesData, questionsData] = await Promise.all([
-        categoryService.getAll(),
-        questionService.getAll(),
+        categoryService.getAll().catch(err => {
+          console.error('Error loading categories:', err);
+          setError(prev => ({ ...prev, categories: 'Failed to load categories' }));
+          return [];
+        }),
+        questionService.getAll().catch(err => {
+          console.error('Error loading questions:', err);
+          setError(prev => ({ ...prev, questions: 'Failed to load questions' }));
+          return [];
+        }),
       ]);
-      setCategories(categoriesData);
-      setQuestions(questionsData);
-      setFilteredQuestions(questionsData);
+
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+      setQuestions(Array.isArray(questionsData) ? questionsData : []);
+      setFilteredQuestions(Array.isArray(questionsData) ? questionsData : []);
     } catch (err) {
-      setError('Failed to load data');
+      console.error('Unexpected error:', err);
+      setError(prev => ({ ...prev, general: 'An unexpected error occurred' }));
     } finally {
-      setLoading(false);
+      setIsLoading(prev => ({
+        ...prev,
+        categories: false,
+        questions: false
+      }));
     }
   };
 
@@ -51,17 +75,22 @@ const Home: React.FC = () => {
   };
 
   const getRelatedQuestions = (currentQuestionId: string) => {
-    const currentQuestion = questions.find((q) => q._id === currentQuestionId);
-    if (!currentQuestion) return [];
+    if (!currentQuestionId || !questions?.length) return [];
+    
+    const currentQuestion = questions.find((q) => q?._id === currentQuestionId);
+    if (!currentQuestion?.category) return [];
 
     const catId = typeof currentQuestion.category === 'string'
       ? currentQuestion.category
-      : currentQuestion.category._id;
+      : currentQuestion.category?._id;
+
+    if (!catId) return [];
 
     return questions
       .filter((q) => {
-        const qCatId = typeof q.category === 'string' ? q.category : q.category._id;
-        return qCatId === catId && q._id !== currentQuestionId;
+        if (!q?.category) return false;
+        const qCatId = typeof q.category === 'string' ? q.category : q.category?._id;
+        return qCatId && qCatId === catId && q._id !== currentQuestionId;
       })
       .slice(0, 5);
   };
@@ -75,11 +104,14 @@ const Home: React.FC = () => {
   };
 
   const getCategoryName = (question: Question) => {
+    if (!question?.category) return 'Uncategorized';
+    
     if (typeof question.category === 'string') {
-      const cat = categories.find((c) => c._id === question.category);
+      const cat = categories.find((c) => c?._id === question.category);
       return cat?.name || 'Unknown';
     }
-    return question.category.name;
+    
+    return question.category?.name || 'Unknown';
   };
 
   const toggleAnswerBox = (questionId: string) => {
@@ -115,13 +147,14 @@ const Home: React.FC = () => {
       await loadData();
       toggleAnswerBox(questionId);
     } catch (err) {
-      setError('Failed to submit answer');
+      setError(prev => ({ ...prev, general: 'Failed to submit answer' }));
+      console.error('Error submitting answer:', err);
     } finally {
       setSubmittingAnswer(null);
     }
   };
 
-  if (loading) {
+  if (isLoading.categories && isLoading.questions) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -149,16 +182,30 @@ const Home: React.FC = () => {
             </div>
           </button>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm mb-4">
-              {error}
+          {(error.categories || error.questions || error.general) && (
+            <div className="space-y-2 mb-4">
+              {error.categories && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">
+                  {error.categories}
+                </div>
+              )}
+              {error.questions && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">
+                  {error.questions}
+                </div>
+              )}
+              {error.general && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">
+                  {error.general}
+                </div>
+              )}
             </div>
           )}
 
           <div className="space-y-2">
-            {categories.map((category) => {
+            {categories && categories?.map((category) => {
               const count = questions.filter((q) => {
-                const catId = typeof q.category === 'string' ? q.category : q.category._id;
+                const catId = typeof q.category === 'string' ? q?.category : q.category?._id;
                 return catId === category._id;
               }).length;
 
